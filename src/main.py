@@ -5,5 +5,4 @@ if __name__ == "__main__":
     snake.spawn_snake()
 
     while not snake.should_close():
-        snake.update_events()
         snake.tick()
