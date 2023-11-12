@@ -2,7 +2,7 @@ import pygame
 import time
 import sys
 from enum import Enum
-from typing import Tuple
+from typing import List, Tuple
 
 # Examples
 # Input: (5, 2) and (2, 2)
@@ -30,6 +30,8 @@ class Snake:
         self.cell_size = cell_size
 
         self.snake_position: Tuple[int, int] = (0, 0)
+        self.snake_positions: List[Tuple[int, int]] = []
+        self.snake_size = 5
         self.current_direction: Direction = Direction.RIGHT
 
         self.events = []
@@ -41,9 +43,6 @@ class Snake:
     def quit(self) -> None:
         pygame.quit()
         sys.exit()
-
-    def spawn_snake(self) -> None:
-        self.set_tile((self.snake_position[0], self.snake_position[1]), Cell.SNAKE)
 
     def set_tile(self, position: Tuple[int, int], cell_type: Cell) -> None:
         self.board[position[0]][position[1]] = cell_type
@@ -75,9 +74,7 @@ class Snake:
     def tick(self) -> None:
         self.update_events()
 
-        if self.is_position_valid((self.snake_position[0] + 1, self.snake_position[1])):
-            self.set_tile(add_positions(self.snake_position, self.current_direction.value), Cell.SNAKE)
-
+        # snake mover
         for event in self.events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_w:
@@ -88,6 +85,15 @@ class Snake:
                     self.current_direction = Direction.DOWN
                 elif event.key == pygame.K_d:
                     self.current_direction = Direction.RIGHT
+
+        self.snake_positions.append(self.snake_position)
+        if self.is_position_valid((self.snake_position[0] + 1, self.snake_position[1])):
+            self.set_tile(add_positions(self.snake_position, self.current_direction.value), Cell.SNAKE)
+
+        # Snake size controller
+        if len(self.snake_positions) > self.snake_size:
+            self.set_tile(self.snake_positions[-self.snake_size], Cell.EMPTY)
+            self.snake_positions.pop(-self.snake_size)
 
         self.draw_board()
                 
