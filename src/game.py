@@ -1,6 +1,7 @@
 import pygame
 import time
 import sys
+import random
 from enum import Enum
 from typing import List, Tuple
 
@@ -31,8 +32,10 @@ class Snake:
 
         self.snake_position: Tuple[int, int] = (0, 0)
         self.snake_positions: List[Tuple[int, int]] = []
-        self.snake_size = 5
+        self.snake_size = 1
         self.current_direction: Direction = Direction.RIGHT
+
+        self.is_apple_spawned = False
 
         self.events = []
         self.board: list[list[Cell]] = [[Cell.EMPTY for _ in range(board_size)] for _ in range(board_size)]
@@ -71,10 +74,20 @@ class Snake:
 
         return False
 
+    def get_random_empty_position(self) -> Tuple[int, int]:
+        empty_positions: List[Tuple[int, int]] = []
+
+        for y_coordinate, y in enumerate(self.board):
+            for x_coordinate, _ in enumerate(y):
+                if self.board[x_coordinate][y_coordinate] == Cell.EMPTY:
+                    empty_positions.append((x_coordinate, y_coordinate))
+
+        return random.choice(empty_positions)
+
     def tick(self) -> None:
         self.update_events()
 
-        # snake mover
+        # Snake mover
         for event in self.events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_w:
@@ -88,12 +101,26 @@ class Snake:
 
         self.snake_positions.append(self.snake_position)
         if self.is_position_valid((self.snake_position[0] + 1, self.snake_position[1])):
-            self.set_tile(add_positions(self.snake_position, self.current_direction.value), Cell.SNAKE)
+            new_position = add_positions(self.snake_position, self.current_direction.value)
+
+            # Before moving the snake, we check if the snake is gonna be on top of an
+            # apple
+            if self.board[new_position[0]][new_position[1]] == Cell.APPLE:
+                self.snake_size += 1
+                self.is_apple_spawned = False
+
+            # Moving the snake
+            self.set_tile(new_position, Cell.SNAKE)
 
         # Snake size controller
         if len(self.snake_positions) > self.snake_size:
             self.set_tile(self.snake_positions[-self.snake_size], Cell.EMPTY)
             self.snake_positions.pop(-self.snake_size)
+
+        # Apple spawner
+        if not self.is_apple_spawned:
+            self.set_tile(self.get_random_empty_position(), Cell.APPLE)
+            self.is_apple_spawned = True
 
         self.draw_board()
                 
