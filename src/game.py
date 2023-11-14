@@ -67,8 +67,8 @@ class Snake:
 
     # Checks if the position is inside the board
     def is_position_valid(self, position: Tuple[int, int]) -> bool:
-        if self.board_size > position[0] and position[0] >= 0 \
-            and self.board_size > position[1] and position[1] >= 0:
+        if position[0] < self.board_size and position[0] >= 0 \
+            and position[1] < self.board_size and position[1] >= 0:
 
             return True
 
@@ -83,6 +83,9 @@ class Snake:
                     empty_positions.append((x_coordinate, y_coordinate))
 
         return random.choice(empty_positions)
+
+    def game_over(self):
+        self.quit()
 
     def tick(self) -> None:
         self.update_events()
@@ -100,14 +103,18 @@ class Snake:
                     self.current_direction = Direction.RIGHT
 
         self.snake_positions.append(self.snake_position)
-        if self.is_position_valid((self.snake_position[0] + 1, self.snake_position[1])):
+        if self.is_position_valid((self.snake_position[0], self.snake_position[1])):
             new_position = add_positions(self.snake_position, self.current_direction.value)
 
             # Before moving the snake, we check if the snake is gonna be on top of an
-            # apple
-            if self.board[new_position[0]][new_position[1]] == Cell.APPLE:
+            # apple, if it's gonna eat itself or if it's even a valid position
+            if not self.is_position_valid(new_position):
+                self.game_over()
+            elif self.board[new_position[0]][new_position[1]] == Cell.APPLE:
                 self.snake_size += 1
                 self.is_apple_spawned = False
+            elif self.board[new_position[0]][new_position[1]] == Cell.SNAKE:
+                self.game_over()
 
             # Moving the snake
             self.set_tile(new_position, Cell.SNAKE)
